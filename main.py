@@ -51,7 +51,7 @@ async def history(interaction: discord.Interaction):
         await interaction.followup.send("Pas de commandes dans l'historique")
         return
     
-    history_commandes = "\n".join(commandes)
+    history_commandes = "\n".join(reversed(commandes))
 
     if len(history_commandes) > 2000:
         history_commandes = history_commandes[:1995] + "\n..."
