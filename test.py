@@ -24,9 +24,9 @@ async def on_message(message: discord.Message):
         channel = message.channel
         author = message.author
         await author.send("Tu veux je bz ta mère ?")
-        
+
     if message.content.lower() == 'au revoir':
         good_bye_channel = bot.get_channel(1442268548436332765)
-        await good_bye_channel.send("Au revoir.")
+        await good_bye_channel.send(f"Au revoir {message.author} !")
 
 bot.run(TOKEN)
