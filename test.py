@@ -12,8 +12,12 @@ async def on_ready():
 
 @bot.event
 async def on_message(message: discord.Message):
-    if message.content =='quoi':
+    if message.content.lower() =='quoi':
         channel = message.channel
         await channel.send("FEUR !")
+    if message.content.lower() == 'ntm':
+        channel = message.channel
+        author = message.author
+        await author.send("Tu veux je bz ta mère ?")
 
 bot.run(TOKEN)
