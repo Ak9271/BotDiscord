@@ -12,8 +12,8 @@ async def on_ready():
 
 @bot.event
 async def on_message(message: discord.Message):
-    if message.content =='bonjour':
+    if message.content =='quoi':
         channel = message.channel
-        await channel.send("Salut")
+        await channel.send("FEUR !")
 
 bot.run(TOKEN)
