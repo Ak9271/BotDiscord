@@ -58,4 +58,34 @@ async def history(interaction: discord.Interaction):
     await interaction.followup.send(f"Historique des tes commandes:\n{history_commandes}")
 
 
+@bot.tree.command(name="clearhistory", description="Supprime votre historique de messages dans ce canal (confirmation requise)")
+async def clearhistory(interaction: discord.Interaction, confirm: bool = False):
+    
+    user = interaction.user
+    channel = interaction.channel
+
+    if channel is None:
+        await interaction.response.send_message("Cette commande doit être utilisée dans un salon textuel.", ephemere=True)
+        return
+
+    await interaction.response.defer(ephemere=True)
+
+    if not confirm:
+        await interaction.followup.send(
+            "Cette commande supprimera jusqu'aux 100 dernieres commandes que vous avez envoyées. "
+            "Pour confirmer, réexécutez la commande et mettre `confirm=true`.",
+            ephemere=True,
+        )
+        return
+
+    supp_count = 0
+    async for msg in channel.history(limit=100):
+        if msg.author.id == user.id:
+            try:
+                await msg.delete()
+                supp_count += 1
+            except Exception as e:
+                print(f"Erreur suppression message {msg.id}: {e}")
+
+    await interaction.followup.send(f"Suppression terminée : {supp_count} message supprimé.", ephemere=True)
 bot.run(TOKEN)
