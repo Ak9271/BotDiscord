@@ -65,16 +65,16 @@ async def clearhistory(interaction: discord.Interaction, confirm: bool = False):
     channel = interaction.channel
 
     if channel is None:
-        await interaction.response.send_message("Cette commande doit être utilisée dans un salon textuel.", ephemere=True)
+        await interaction.response.send_message("Cette commande doit être utilisée dans un salon textuel.", ephemeral=True)
         return
 
-    await interaction.response.defer(ephemere=True)
+    await interaction.response.defer(ephemeral=True)
 
     if not confirm:
         await interaction.followup.send(
             "Cette commande supprimera jusqu'aux 100 dernieres commandes que vous avez envoyées. "
             "Pour confirmer, réexécutez la commande et mettre `confirm=true`.",
-            ephemere=True,
+            ephemeral=True,
         )
         return
 
@@ -87,5 +87,24 @@ async def clearhistory(interaction: discord.Interaction, confirm: bool = False):
             except Exception as e:
                 print(f"Erreur suppression message {msg.id}: {e}")
 
-    await interaction.followup.send(f"Suppression terminée : {supp_count} message supprimé.", ephemere=True)
+    await interaction.followup.send(f"Suppression terminée : {supp_count} message supprimé.", ephemeral=True)
+
+@bot.tree.command(name="dernierecommande", description="Affiche la dernière commande entrée")
+async def dernierecommande(interaction: discord.Interaction):
+    user = interaction.user
+    channel = interaction.channel
+
+    await interaction.response.defer()
+
+    last_command = None
+    async for msg in channel.history(limit=100):
+        if msg.author.id == user.id:
+            last_command = msg.content
+            break
+
+    if last_command is None:
+        await interaction.followup.send("Aucune commande trouvée dans l'historique.")
+    else:
+        await interaction.followup.send(f"Votre dernière commande était : {last_command}")
+
 bot.run(TOKEN)
