@@ -1,11 +1,13 @@
 import os
 import discord
 from discord.ext import commands
+from arbre_question import ArbreQuestion, generer_calcul_1, generer_calcul_2, generer_calcul_3, generer_calcul_4, generer_calcul_5, generer_calcul_6, generer_calcul_7, generer_calcul_8
 
 TOKEN = os.getenv("TOKEN")
 
 print ('Lancement du bot ...')
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+etat_user = {}
 
 @bot.event
 async def on_ready(): 
@@ -35,6 +37,45 @@ async def on_message(message: discord.Message):
         channel = message.channel
         await channel.send("Je t'aime aussi mon bb!")
     
+    # Gestion des réponses du Quiz
+    if message.author.id in etat_user and not message.content.startswith('!'):
+        user_state = etat_user[message.author.id]
+        reponse_user = message.content
+        reponse_attendue = str(user_state['reponse_attendue'])
+        
+        if reponse_user == reponse_attendue:
+            # Bonne réponse
+            etape_actuelle_key = user_state['etape']
+            etape_actuelle = ArbreQuestion[etape_actuelle_key]
+            next_step_key = etape_actuelle.get("suivant")
+            
+            if next_step_key == "Note Finale" or next_step_key is None:
+                 await message.channel.send(ArbreQuestion["conclusion_finale"]["conclusion"])
+                 del etat_user[message.author.id]
+            else:
+                # Générer prochaine question
+                next_step = ArbreQuestion[next_step_key]
+                question_text, reponse_attendue = next_step["generateur"]()
+                
+                etat_user[message.author.id] = {
+                    'etape': next_step_key,
+                    'reponse_attendue': reponse_attendue,
+                    'tentatives': next_step["erreur_max"]
+                }
+                
+                msg = f"Bravo ! Question suivante :\n**{question_text}**\n*Tentatives restantes : {next_step['erreur_max']}*"
+                await message.channel.send(msg)
+        else:
+            # Mauvaise réponse
+            user_state['tentatives'] -= 1
+            if user_state['tentatives'] <= 0:
+                await message.channel.send(f"Dommage, c'est perdu ! La réponse était {reponse_attendue}. {ArbreQuestion['echec']['conclusion']}")
+                del etat_user[message.author.id]
+            else:
+                await message.channel.send(f"Mauvaise réponse. Il te reste {user_state['tentatives']} tentatives.")
+        
+        return
+
     # Permettre les commandes traditionnelles avec !
     await bot.process_commands(message)
 
@@ -101,5 +142,29 @@ async def dernierecommande(ctx):
         await ctx.send("Aucune commande trouvée dans l'historique.")
     else:
         await ctx.send(f"Votre dernière commande était : {last_command}")
+
+@bot.command(name="quiz", aliases=["quizz"])
+async def quiz(ctx):
+    print(f"Commande quiz lancée par {ctx.author}")
+    user_id = ctx.author.id
+    etape1_key = "start"
+    etape1 = ArbreQuestion[etape1_key]
+
+    if user_id in etat_user:
+        await ctx.send("Tu fais déjà un quiz .")
+        return
+    
+    question_text, reponse_attendue = etape1["generateur"]()
+
+    etat_user[user_id] = {
+        'etape': etape1_key,
+        'reponse_attendue': reponse_attendue,
+        'tentatives': etape1["erreur_max"]
+    }
+
+    message = f"Bonjour {ctx.author.mention} ! Commençons le questionnaire de calcul mental.\n\n"
+    message += f"**CALCUL :** {question_text}\n"
+    message += f"*Tentatives restantes : {etape1['erreur_max']}*"
+    await ctx.send(message)
 
 bot.run(TOKEN)

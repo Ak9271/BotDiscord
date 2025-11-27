@@ -1,5 +1,5 @@
 import random
-import operator 
+import operator
 
 def generer_calcul_1():
     a = random.randint(1, 10)
@@ -39,7 +39,7 @@ def generer_calcul_5():
     return question, reponse
 
 def generer_calcul_6():
-    a = random.randint(1,20)
+    a = random.randint(1,9)
     puissance = random.randint(1,5)
     b = random.randint(1,2000)
     question = f"6. Calculer : {a}^{puissance} - {b}"
@@ -56,8 +56,8 @@ def generer_calcul_7():
     return question, reponse
 
 def generer_calcul_8():
-    r1 = random.randint(1,5)
-    r2 = r1 + random.randint(1,3)
+    r1 = random.randint(1,9)
+    r2 = r1 + random.randint(1,5)
     somme = r1 + r2
     produit = r1 * r2
     question = f"8. x² - {somme}x + {produit} = 0. Trouver les solutions x1 et x2."
