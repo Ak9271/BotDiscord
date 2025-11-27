@@ -10,12 +10,7 @@ bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 @bot.event
 async def on_ready(): 
     print("Bot allumé ")
-    #Synchroniser commandes
-    try:
-        synchronise = await bot.tree.sync()
-        print(f"Commandes '/' synchronisées: {len(synchronise)}")
-    except Exception as e:
-        print(e)
+    #Commandes traditionnelles avec préfixe ! activées
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -34,47 +29,49 @@ async def on_message(message: discord.Message):
 
     if message.content.lower() == 'au revoir':
         good_bye_channel = bot.get_channel(1442268548436332765)
-        await good_bye_channel.send(f"Au revoir {message.author} !")
+        await good_bye_channel.send(f"Retourne dans ton pays {message.author} !")
 
-@bot.tree.command(name="history", description="Affiche l'historique des commandes")
-async def history(interaction: discord.Interaction):
-    user = interaction.user
-    channel = interaction.channel
-    #eviter les erreurs si trop long
-    await interaction.response.defer()
+    if message.content.lower() == "je t'aime":
+        channel = message.channel
+        await channel.send("Je t'aime aussi mon bb!")
+    
+    # Permettre les commandes traditionnelles avec !
+    await bot.process_commands(message)
+
+@bot.command(name="history")
+async def history(ctx):
+    user = ctx.author
+    channel = ctx.channel
 
     commandes = []
     async for msg in channel.history(limit=100):
         if msg.author.id == user.id:
             commandes.append(f" - {msg.content}")
     if not commandes:
-        await interaction.followup.send("Pas de commandes dans l'historique")
+        await ctx.send("Pas de commandes dans l'historique")
         return
     
     history_commandes = "\n".join([f"{i+1}. {content}" for i, content in enumerate(reversed(commandes))])
 
     if len(history_commandes) > 2000:
         history_commandes = history_commandes[:1995] + "\n..."
-    await interaction.followup.send(f"Historique des tes commandes:\n{history_commandes}")
+    await ctx.send(f"Historique des tes commandes:\n{history_commandes}")
 
 
-@bot.tree.command(name="clearhistory", description="Supprime votre historique de messages dans ce canal (confirmation requise)")
-async def clearhistory(interaction: discord.Interaction, confirm: bool = False):
+@bot.command(name="clearhistory")
+async def clearhistory(ctx, confirm: str = None):
     
-    user = interaction.user
-    channel = interaction.channel
+    user = ctx.author
+    channel = ctx.channel
 
     if channel is None:
-        await interaction.response.send_message("Cette commande doit être utilisée dans un salon textuel.", ephemeral=True)
+        await ctx.send("Cette commande doit être utilisée dans un salon textuel.")
         return
 
-    await interaction.response.defer(ephemeral=True)
-
-    if not confirm:
-        await interaction.followup.send(
+    if confirm != "true":
+        await ctx.send(
             "Cette commande supprimera jusqu'aux 100 dernieres commandes que vous avez envoyées. "
-            "Pour confirmer, réexécutez la commande et mettre `confirm=true`.",
-            ephemeral=True,
+            "Pour confirmer, utilisez `!clearhistory true`."
         )
         return
 
@@ -87,14 +84,12 @@ async def clearhistory(interaction: discord.Interaction, confirm: bool = False):
             except Exception as e:
                 print(f"Erreur suppression message {msg.id}: {e}")
 
-    await interaction.followup.send(f"Suppression terminée : {supp_count} message supprimé.", ephemeral=True)
+    await ctx.send(f"Suppression terminée : {supp_count} message supprimé.")
 
-@bot.tree.command(name="dernierecommande", description="Affiche la dernière commande entrée")
-async def dernierecommande(interaction: discord.Interaction):
-    user = interaction.user
-    channel = interaction.channel
-
-    await interaction.response.defer()
+@bot.command(name="dernierecommande")
+async def dernierecommande(ctx):
+    user = ctx.author
+    channel = ctx.channel
 
     last_command = None
     async for msg in channel.history(limit=100):
@@ -103,8 +98,8 @@ async def dernierecommande(interaction: discord.Interaction):
             break
 
     if last_command is None:
-        await interaction.followup.send("Aucune commande trouvée dans l'historique.")
+        await ctx.send("Aucune commande trouvée dans l'historique.")
     else:
-        await interaction.followup.send(f"Votre dernière commande était : {last_command}")
+        await ctx.send(f"Votre dernière commande était : {last_command}")
 
 bot.run(TOKEN)
