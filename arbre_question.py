@@ -38,6 +38,32 @@ def generer_calcul_5():
     reponse = nombre * nbr_virgule
     return question, reponse
 
+def generer_calcul_6():
+    a = random.randint(1,20)
+    puissance = random.randint(1,5)
+    b = random.randint(1,2000)
+    question = f"6. Calculer : {a}^{puissance} - {b}"
+    reponse = (a ** puissance) - b
+    return question, reponse
+
+def generer_calcul_7():
+    x = random.randint(5, 10)
+    a = random.randint(2, 4)
+    b = random.randint(1, 5)
+    c = a * x - b
+    question = f"7. Résoudre pour x : {a}x - {b} = {c}. Trouver la valeur de x."
+    reponse = x
+    return question, reponse
+
+def generer_calcul_8():
+    r1 = random.randint(1,5)
+    r2 = r1 + random.randint(1,3)
+    somme = r1 + r2
+    produit = r1 * r2
+    question = f"8. x² - {somme}x + {produit} = 0. Trouver les solutions x1 et x2."
+    bonne_reponse = sorted([r1, r2])
+    reponse_esperee = f"{bonne_reponse[0]} et {bonne_reponse[1]}"
+    return question, reponse_esperee
 
 ArbreQuestion = {
 
