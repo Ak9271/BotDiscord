@@ -66,5 +66,50 @@ def generer_calcul_8():
     return question, reponse_esperee
 
 ArbreQuestion = {
-
+    "start": {
+        "generateur": generer_calcul_1,
+        "suivant": "calcul_2",
+        "erreur_max": 2
+    },
+    "calcul_2": {
+        "generateur": generer_calcul_2,
+        "suivant": "calcul_3",
+        "erreur_max": 2
+    },
+    "calcul_3": {
+        "generateur": generer_calcul_3,
+        "suivant": "calcul_4",
+        "erreur_max": 2
+    },
+    "calcul_4": {
+        "generateur": generer_calcul_4,
+        "suivant": "calcul_5",
+        "erreur_max": 3
+    },
+    "calcul_5": {
+        "generateur": generer_calcul_5,
+        "suivant": "calcul_6",
+        "erreur_max": 3
+    },
+    "calcul_6": {
+        "generateur": generer_calcul_6,
+        "suivant": "calcul_7",
+        "erreur_max": 3
+    },
+    "calcul_7": {
+        "generateur": generer_calcul_7,
+        "suivant": "calcul_8",
+        "erreur_max": 4
+    },
+    "calcul_8": {
+        "generateur": generer_calcul_8,
+        "suivant": "Note Finale",
+        "erreur_max": 5
+    },
+    "conclusion_finale": {
+        "conclusion": "Tu as fini tous les calculs. Bravo !"
+    },
+    "echec": {
+        "conclusion": "Tu as dépassé le nombre maximum d'erreurs autorisées. Fin du test."
+    }
 }
