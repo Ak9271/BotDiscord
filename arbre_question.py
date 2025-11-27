@@ -27,14 +27,14 @@ def generer_calcul_3():
 def generer_calcul_4():
     pourcentage = random.choice([10,15,20,25,30])
     nombre = random.choice([50,100,150,200,250,500])
-    question = f"4. Calculer : {pourcentage}% de {nombre}"
+    question = f"4. Calculer : {pourcentage}% de {nombre}, (Noter la decimale meme si 0)"
     reponse = (pourcentage / 100) * nombre
     return question, reponse
 
 def generer_calcul_5():
     nbr_virgule = random.choice([0.1,0.2,0.5,1.5,2.5,3.5,4.5,5.5])
     nombre = random.randint(1, 1000)
-    question = f"5. Calculer : {nombre} * {nbr_virgule}"
+    question = f"5. Calculer : {nombre} * {nbr_virgule}, (Noter la decimale meme si 0)"
     reponse = nombre * nbr_virgule
     return question, reponse
 

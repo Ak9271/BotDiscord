@@ -45,12 +45,13 @@ async def on_message(message: discord.Message):
         
         if reponse_user == reponse_attendue:
             # Bonne réponse
+            user_state['score'] += 1
             etape_actuelle_key = user_state['etape']
             etape_actuelle = ArbreQuestion[etape_actuelle_key]
             next_step_key = etape_actuelle.get("suivant")
             
             if next_step_key == "Note Finale" or next_step_key is None:
-                 await message.channel.send(ArbreQuestion["conclusion_finale"]["conclusion"])
+                 await message.channel.send(f"{ArbreQuestion['conclusion_finale']['conclusion']} Ton score final est de {user_state['score']}/8.")
                  del etat_user[message.author.id]
             else:
                 # Générer prochaine question
@@ -159,7 +160,8 @@ async def quiz(ctx):
     etat_user[user_id] = {
         'etape': etape1_key,
         'reponse_attendue': reponse_attendue,
-        'tentatives': etape1["erreur_max"]
+        'tentatives': etape1["erreur_max"],
+        'score': 0
     }
 
     message = f"Bonjour {ctx.author.mention} ! Commençons le questionnaire de calcul mental.\n\n"
