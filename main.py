@@ -2,7 +2,8 @@ import os
 import discord
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
+import traceback
 from discord.ext import commands
 from arbre_question import ArbreQuestion
 
@@ -13,9 +14,8 @@ bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 etat_user = {}
 HISTORY_FILE = Path(__file__).parent / "command_history.json"
 QUOI_FILE = Path(__file__).parent / "QUOI.txt"
-
 INSULTS_FILE = Path(__file__).parent / "insultes.txt"
-
+COURS_FILE = Path(__file__).parent / "cours-maths.pdf"
 
 def load_insult_patterns():
     patterns = set()
@@ -124,11 +124,53 @@ async def on_message(message: discord.Message):
                 if ins and ins in msg_norm:
                     channel = message.channel
                     author = message.author
-                    await author.send("Tu veux je bz ta mère ?")
-                    await channel.send(f"Tu veux je bz ta mère {author.mention} ?")
+                    print(f"[MOD] Insulte détectée de {author} ({author.id}) dans {getattr(channel, 'id', 'unknown')}: '{message.content}'")
+
+                    try:
+                        await channel.send(f"Insulte détectée de {author.mention}. Tentative de sanction en cours...")
+                    except Exception:
+                        pass
+
+                    # mute message de 1 minute
+                    mute_success = False
+                    try:
+                        timeout_fn = getattr(author, 'timeout', None)
+                        if callable(timeout_fn):
+                            try:
+                                await author.timeout(timedelta(minutes=1), reason="Insulte détectée")
+                                mute_success = True
+                            except TypeError:
+                                try:
+                                    await author.timeout(datetime.utcnow() + timedelta(minutes=1), reason="Insulte détectée")
+                                    mute_success = True
+                                except Exception:
+                                    traceback.print_exc()
+                        else:
+                            try:
+                                await author.edit(communication_disabled_until=datetime.utcnow() + timedelta(minutes=1))
+                                mute_success = True
+                            except Exception:
+                                traceback.print_exc()
+                    except Exception:
+                        traceback.print_exc()
+
+                    # envoyer confirmation en salon selon le résultat
+                    try:
+                        if mute_success:
+                            await channel.send(f"{author.mention} a été mute pour 1 minute pour insulte.")
+                        else:
+                            await channel.send(f"Impossible d'appliquer le mute à {author.mention} (vérifier permis du bot / version de la lib).")
+                    except Exception:
+                        pass
+
+                    # envoyer le message de réponse (conserver comportement précédent)
+                    try:
+                        await channel.send(f"Tu veux je bz ta mère {author.mention} ?")
+                    except Exception:
+                        print(f"[MOD] Impossible d'envoyer un DM à {author} ({author.id})")
                     break
     except Exception:
-        pass
+        traceback.print_exc()
     if message.content.lower() == "je t'aime":
         channel = message.channel
         await channel.send("Je t'aime aussi mon bb!")
@@ -180,7 +222,24 @@ async def on_message(message: discord.Message):
                         next_step_key = match
 
                 if next_step_key == "conclusion_finale" or next_step_key is None:
-                    await message.channel.send(f"Dommage, c'est perdu ! La réponse était {reponse_attendue}. {ArbreQuestion['echec']['conclusion']}")
+                    await message.channel.send(f"Dommage, c'est perdu ! La réponse était {reponse_attendue}. \n {ArbreQuestion['echec']['conclusion']}")
+                    try:
+                        if COURS_FILE.exists():
+                            try:
+                                await message.channel.send(file=discord.File(str(COURS_FILE)))
+                            except Exception:
+                                pass
+                            try:
+                                await message.author.send(file=discord.File(str(COURS_FILE)))
+                            except Exception:
+                                pass
+                        else:
+                            try:
+                                await message.channel.send("Le fichier `cours-maths.pdf` est introuvable")
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
                     del etat_user[message.author.id]
                 else:
                     #Générer prochaine question après échec
