@@ -41,8 +41,8 @@ def add_history_entry(user_id: int, content: str, channel_id: int):
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }
     data.setdefault(key, [])
-    data[key].insert(0, entry)  # most recent first
-    # keep only last 500 entrees per user
+    data[key].insert(0, entry)
+    #garde max 500 entrées/user
     if len(data[key]) > 500:
         data[key] = data[key][:500]
     save_history(data)
