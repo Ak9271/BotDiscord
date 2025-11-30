@@ -22,7 +22,7 @@ Ceci est un bot Discord développé en Python utilisant la librairie `discord.py
 | :-------------------- | :------------------- | :-------------------------------------------------- |
 | **`.env`**            | **Configuration**    | Doit contenir `TOKEN="VOTRE_TOKEN_DISCORD_ICI"`.    |
 | **`insultes.txt`**    | **Modération**       | Liste des mots/phrases à détecter pour le mute.     |
-| **`QUOI.txt`**        | **Fun**              | Liste des mots/phrases qui déclenchent le "FEUR !". |
+| **`QUOI.txt`**        | **Troll**              | Liste des mots/phrases qui déclenchent le "FEUR !". |
 | **`cours-maths.pdf`** | **Quiz**             | Fichier PDF envoyé en cas d'échec au quiz.          |
 
 ## ⚙️ Commandes Utilisateur
