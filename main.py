@@ -159,13 +159,13 @@ async def on_message(message: discord.Message):
                         if mute_success:
                             await channel.send(f"{author.mention} a été mute pour 1 minute pour insulte.")
                         else:
-                            await channel.send(f"Impossible d'appliquer le mute à {author.mention} (vérifier permis du bot / version de la lib).")
+                            await channel.send(f"Impossible d'appliquer le mute à {author.mention} (vérifier permis du bot).")
                     except Exception:
                         pass
 
                     # envoyer le message de réponse (conserver comportement précédent)
                     try:
-                        await channel.send(f"Tu veux je bz ta mère {author.mention} ?")
+                        await channel.send(f"Attention les insultes {author.mention} ?")
                     except Exception:
                         print(f"[MOD] Impossible d'envoyer un DM à {author} ({author.id})")
                     break
