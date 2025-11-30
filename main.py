@@ -64,7 +64,8 @@ async def on_message(message: discord.Message):
     except Exception:
         pass
     
-    if message.content.lower() =='quoi':
+    # Répondre "FEUR !" si la chaîne 'quoi' apparaît n'importe où dans le message
+    if isinstance(message.content, str) and 'quoi' in message.content.lower():
         channel = message.channel
         await channel.send("FEUR !")
 
@@ -174,9 +175,7 @@ async def history(ctx):
 
 @bot.command(name="clearHistory")
 async def clearHistory(ctx, confirm: str = None):
-
     user = ctx.author
-
     if confirm != "true":
         await ctx.send(
             "Cette commande supprimera tout l'historique local (fichier JSON) pour votre utilisateur. "
