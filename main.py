@@ -50,7 +50,7 @@ def add_history_entry(user_id: int, content: str, channel_id: int):
 @bot.event
 async def on_ready(): 
     print("Bot allumé ")
-    #Commandes de base avec préfixe ! activées
+    #Commandes de base avec préfixe "!"
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -80,7 +80,7 @@ async def on_message(message: discord.Message):
         channel = message.channel
         await channel.send("Je t'aime aussi mon bb!")
     
-    # Gestion des reposes
+    # Gestion des réposes
     if message.author.id in etat_user and not message.content.startswith('!'):
         user_state = etat_user[message.author.id]
         reponse_user = message.content
@@ -189,15 +189,7 @@ async def clearHistory(ctx, confirm: str = None):
         )
         return
 
-    supp_count = 0
-    async for msg in channel.history(limit=100):
-        if msg.author.id == user.id:
-            try:
-                await msg.delete()
-                supp_count += 1
-            except Exception as e:
-                print(f"Erreur suppression message {msg.id}: {e}")
-    # supprimer aussi de l'historique local
+    #Supp l'historique sur json et non sur discord
     try:
         data = load_history()
         user_list = data.get(str(user.id), [])
@@ -205,11 +197,12 @@ async def clearHistory(ctx, confirm: str = None):
         removed = len(user_list) - len(new_list)
         data[str(user.id)] = new_list
         save_history(data)
-        supp_count = max(supp_count, removed)
     except Exception as e:
         print(f"Erreur mise à jour historique local: {e}")
+        await ctx.send("Une erreur est survenue lors de la suppression de l'historique local.")
+        return
 
-    await ctx.send(f"Suppression terminée : {supp_count} message(s) supprimé(s).")
+    await ctx.send(f"Suppression terminée : {removed} entrée(s) d'historique supprimée(s) du fichier local.")
 
 @bot.command(name="lastCommande")
 async def lastCommande(ctx):
