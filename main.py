@@ -49,6 +49,7 @@ def add_history_entry(user_id: int, content: str, channel_id: int):
 
 @bot.event
 async def on_ready(): 
+    print(" ")
     print("Bot allumé ")
     #Commandes de base avec préfixe "!"
 
@@ -156,15 +157,14 @@ async def history(ctx):
     channel = ctx.channel
     data = load_history()
     entrees = data.get(str(user.id), [])
-    # filtrer par channel
-    filtered = [e for e in entrees if e.get("channel_id") == str(channel.id)]
-    if not filtered:
-        await ctx.send("Pas de commandes dans l'historique pour ce salon.")
+    if not entrees:
+        await ctx.send("Pas de commandes dans l'historique pour cet utilisateur.")
         return
 
     # afficher du + ancien au + récent
-    to_show = list(reversed(filtered))
-    lines = [f"{i+1}. {item['content']} ({item['timestamp']})" for i, item in enumerate(to_show)]
+    to_show = list(reversed(entrees))
+    # afficher aussi le salon pour contexte
+    lines = [f"{i+1}. {item['content']} (salon: {item.get('channel_id')}) - {item['timestamp']}" for i, item in enumerate(to_show)]
     history_commandes = "\n".join(lines)
 
     if len(history_commandes) > 2000:
@@ -174,35 +174,29 @@ async def history(ctx):
 
 @bot.command(name="clearHistory")
 async def clearHistory(ctx, confirm: str = None):
-    
-    user = ctx.author
-    channel = ctx.channel
 
-    if channel is None:
-        await ctx.send("Cette commande doit être utilisée dans un salon textuel.")
-        return
+    user = ctx.author
 
     if confirm != "true":
         await ctx.send(
-            "Cette commande supprimera jusqu'aux 100 dernieres commandes que vous avez envoyées. "
+            "Cette commande supprimera tout l'historique local (fichier JSON) pour votre utilisateur. "
             "Pour confirmer, utilisez `!clearHistory true`."
         )
         return
 
-    #Supp l'historique sur json et non sur discord
+    #Supprimer historique local pour cet user
     try:
         data = load_history()
         user_list = data.get(str(user.id), [])
-        new_list = [e for e in user_list if e.get("channel_id") != str(channel.id)]
-        removed = len(user_list) - len(new_list)
-        data[str(user.id)] = new_list
+        removed = len(user_list)
+        data[str(user.id)] = []
         save_history(data)
     except Exception as e:
         print(f"Erreur mise à jour historique local: {e}")
         await ctx.send("Une erreur est survenue lors de la suppression de l'historique local.")
         return
 
-    await ctx.send(f"Suppression terminée : {removed} entrée(s) d'historique supprimée(s) du fichier local.")
+    await ctx.send(f"Suppression terminée : {removed} entrée(s) d'historique supprimée(s) du fichier local pour votre utilisateur.")
 
 @bot.command(name="lastCommande")
 async def lastCommande(ctx):
@@ -215,11 +209,10 @@ async def lastCommande(ctx):
         return
 
     last_command = None
-    # Utiliser l'historique JSON stocké
+    #Utiliser l'historique JSON 
     data = load_history()
     entrees = data.get(str(user.id), [])
-    #Garder que le salon actuel
-    filtered = [e['content'] for e in entrees if e.get('channel_id') == str(channel.id)]
+    filtered = [e['content'] for e in entrees]
     if len(filtered) >= 2:
         await ctx.send(f"Votre avant-dernière commande était : {filtered[1]}")
     elif len(filtered) == 1:
