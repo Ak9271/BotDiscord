@@ -274,7 +274,7 @@ async def history(ctx):
 
     # afficher du + ancien au + récent
     to_show = list(reversed(entrees))
-    # afficher aussi le salon pour contexte
+    # afficher aussi salon pour contexte
     lines = [f"{i+1}. {item['content']} (salon: {item.get('channel_id')}) - {item['timestamp']}" for i, item in enumerate(to_show)]
     history_commandes = "\n".join(lines)
 
