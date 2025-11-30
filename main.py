@@ -1,5 +1,8 @@
 import os
 import discord
+import json
+from pathlib import Path
+from datetime import datetime
 from discord.ext import commands
 from arbre_question import ArbreQuestion
 
@@ -8,17 +11,57 @@ TOKEN = os.getenv("TOKEN")
 print ('Lancement du bot ...')
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 etat_user = {}
+HISTORY_FILE = Path(__file__).parent / "command_history.json"
+
+
+def load_history():
+    if not HISTORY_FILE.exists():
+        return {}
+    try:
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def save_history(data: dict):
+    try:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Failed to save history: {e}")
+
+
+def add_history_entry(user_id: int, content: str, channel_id: int):
+    data = load_history()
+    key = str(user_id)
+    entry = {
+        "content": content,
+        "channel_id": str(channel_id),
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+    data.setdefault(key, [])
+    data[key].insert(0, entry)  # most recent first
+    # keep only last 500 entrees per user
+    if len(data[key]) > 500:
+        data[key] = data[key][:500]
+    save_history(data)
 
 @bot.event
 async def on_ready(): 
     print("Bot allumé ")
-    #Commandes traditionnelles avec préfixe ! activées
+    #Commandes de base avec préfixe ! activées
 
 @bot.event
 async def on_message(message: discord.Message):
     #Pour pas que le bot se declenche lui meme
     if message.author.bot:
         return
+    try:
+        if isinstance(message.content, str) and message.content.startswith(('!', '/')):
+            add_history_entry(message.author.id, message.content, message.channel.id if hasattr(message.channel, 'id') else None)
+    except Exception:
+        pass
     
     if message.content.lower() =='quoi':
         channel = message.channel
@@ -47,10 +90,8 @@ async def on_message(message: discord.Message):
             #Bonne reponse
             etape_actuelle_key = user_state['etape']
             etape_actuelle = ArbreQuestion[etape_actuelle_key]
-            # Prefer 'reussite', fall back to 'suivant'
             next_step_key = etape_actuelle.get("reussite") or etape_actuelle.get("suivant")
 
-            # If the key isn't present exactly in ArbreQuestion, try prefix-matching
             if next_step_key and next_step_key not in ArbreQuestion:
                 match = next((k for k in ArbreQuestion.keys() if k.startswith(next_step_key)), None)
                 if match:
@@ -60,7 +101,7 @@ async def on_message(message: discord.Message):
                 await message.channel.send(f"{ArbreQuestion['conclusion_finale']['conclusion']}")
                 del etat_user[message.author.id]
             else:
-                # Générer prochaine question
+                #Générer prochaine question
                 next_step = ArbreQuestion[next_step_key]
                 question_text, reponse_attendue = next_step["generateur"]()
 
@@ -80,7 +121,6 @@ async def on_message(message: discord.Message):
                 etape_actuelle = ArbreQuestion[etape_actuelle_key]
                 next_step_key = etape_actuelle.get("echec_progression") or etape_actuelle.get("suivant")
 
-                # Prefix-match if needed
                 if next_step_key and next_step_key not in ArbreQuestion:
                     match = next((k for k in ArbreQuestion.keys() if k.startswith(next_step_key)), None)
                     if match:
@@ -90,7 +130,7 @@ async def on_message(message: discord.Message):
                     await message.channel.send(f"Dommage, c'est perdu ! La réponse était {reponse_attendue}. {ArbreQuestion['echec']['conclusion']}")
                     del etat_user[message.author.id]
                 else:
-                    # Générer prochaine question après échec
+                    #Générer prochaine question après échec
                     next_step = ArbreQuestion[next_step_key]
                     question_text, reponse_attendue = next_step["generateur"]()
 
@@ -114,20 +154,22 @@ async def on_message(message: discord.Message):
 async def history(ctx):
     user = ctx.author
     channel = ctx.channel
-
-    commandes = []
-    async for msg in channel.history(limit=200):
-        if msg.author.id == user.id and isinstance(msg.content, str) and msg.content.startswith(('/', '!')):
-            commandes.append(f" - {msg.content}")
-    if not commandes:
-        await ctx.send("Pas de commandes dans l'historique")
+    data = load_history()
+    entrees = data.get(str(user.id), [])
+    # filtrer par channel
+    filtered = [e for e in entrees if e.get("channel_id") == str(channel.id)]
+    if not filtered:
+        await ctx.send("Pas de commandes dans l'historique pour ce salon.")
         return
-    
-    history_commandes = "\n".join([f"{i+1}. {content}" for i, content in enumerate(reversed(commandes))])
+
+    # afficher du + ancien au + récent
+    to_show = list(reversed(filtered))
+    lines = [f"{i+1}. {item['content']} ({item['timestamp']})" for i, item in enumerate(to_show)]
+    history_commandes = "\n".join(lines)
 
     if len(history_commandes) > 2000:
         history_commandes = history_commandes[:1995] + "\n..."
-    await ctx.send(f"Historique des tes commandes:\n{history_commandes}")
+    await ctx.send(f"Historique des tes commandes dans ce salon:\n{history_commandes}")
 
 
 @bot.command(name="clearHistory")
@@ -155,8 +197,19 @@ async def clearHistory(ctx, confirm: str = None):
                 supp_count += 1
             except Exception as e:
                 print(f"Erreur suppression message {msg.id}: {e}")
+    # supprimer aussi de l'historique local
+    try:
+        data = load_history()
+        user_list = data.get(str(user.id), [])
+        new_list = [e for e in user_list if e.get("channel_id") != str(channel.id)]
+        removed = len(user_list) - len(new_list)
+        data[str(user.id)] = new_list
+        save_history(data)
+        supp_count = max(supp_count, removed)
+    except Exception as e:
+        print(f"Erreur mise à jour historique local: {e}")
 
-    await ctx.send(f"Suppression terminée : {supp_count} message supprimé.")
+    await ctx.send(f"Suppression terminée : {supp_count} message(s) supprimé(s).")
 
 @bot.command(name="lastCommande")
 async def lastCommande(ctx):
@@ -169,13 +222,14 @@ async def lastCommande(ctx):
         return
 
     last_command = None
-    matches = []
-    async for msg in channel.history(limit=200):
-        if msg.author.id == user.id and isinstance(msg.content, str) and msg.content.startswith(('/', '!')):
-            matches.append(msg.content)
-    if len(matches) >= 2:
-        await ctx.send(f"Votre avant-dernière commande était : {matches[1]}")
-    elif len(matches) == 1:
+    # Utiliser l'historique JSON stocké
+    data = load_history()
+    entrees = data.get(str(user.id), [])
+    #Garder que le salon actuel
+    filtered = [e['content'] for e in entrees if e.get('channel_id') == str(channel.id)]
+    if len(filtered) >= 2:
+        await ctx.send(f"Votre avant-dernière commande était : {filtered[1]}")
+    elif len(filtered) == 1:
         await ctx.send("Il n'y a qu'une seule commande dans l'historique.")
     else:
         await ctx.send("Aucune commande trouvée dans l'historique.")
