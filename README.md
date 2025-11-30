@@ -6,9 +6,15 @@ Ceci est un bot Discord développé en Python utilisant la librairie `discord.py
 ## 🌟 Fonctionnalités Principales
 
 * **Quiz Adaptatif :** Un questionnaire de calcul mental où la progression et le niveau des questions changent en fonction de la réussite ou de l'échec de l'utilisateur.
+![alt text](<Capture d'écran 2025-11-30 220927.png>)
 * **Anti-Insulte avec Mute :** Détection d'insultes basées sur un fichier (`insultes.txt`) et sanction automatique par un **Timeout (mute)** temporaire de 1 minute.
+![alt text](Capture_decran_2025-11-30_215933.png)
 * **Historique des Commandes :** Enregistrement et consultation des commandes utilisées par l'utilisateur stocké dans un fichier json.
+![alt text](<Capture d'écran 2025-11-30 220447.png>)
 * **Envoi de Fichier :** Envoi automatique d'un cours en PDF (`cours-maths.pdf`) en DM en cas d'échec à une question du quiz.
+![alt text](<Capture d'écran 2025-11-30 220601.png>)
+* **QUOI 'FEUR':** Répond 'FEUR' automatiquement lorsqu'un utilisateur emploie le mot "quoi" peu importe l'écriture s'il est detecté dans la phrase
+![alt text](<Capture d'écran 2025-11-30 220707.png>)
 
 ## 🚀 Prérequis et Fichiers
 
