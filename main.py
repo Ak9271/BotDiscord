@@ -163,16 +163,22 @@ async def lastCommande(ctx):
     user = ctx.author
     channel = ctx.channel
 
-    last_command = None
-    async for msg in channel.history(limit=100):
-        if msg.author.id == user.id:
-            last_command = msg.content
-            break
+    #hasattr = verifie si l'objet a un attribut
+    if channel is None or not hasattr(channel, 'history'):
+        await ctx.send("Cette commande doit être utilisée dans un salon textuel.")
+        return
 
-    if last_command is None:
-        await ctx.send("Aucune commande trouvée dans l'historique.")
+    last_command = None
+    matches = []
+    async for msg in channel.history(limit=200):
+        if msg.author.id == user.id and isinstance(msg.content, str) and msg.content.startswith(('/', '!')):
+            matches.append(msg.content)
+    if len(matches) >= 2:
+        await ctx.send(f"Votre avant-dernière commande était : {matches[1]}")
+    elif len(matches) == 1:
+        await ctx.send("Il n'y a qu'une seule commande dans l'historique.")
     else:
-        await ctx.send(f"Votre dernière commande était : {last_command}")
+        await ctx.send("Aucune commande trouvée dans l'historique.")
 
 @bot.command(name="quiz", aliases=["quizz"])
 async def quiz(ctx):
