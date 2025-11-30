@@ -12,6 +12,46 @@ print ('Lancement du bot ...')
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 etat_user = {}
 HISTORY_FILE = Path(__file__).parent / "command_history.json"
+QUOI_FILE = Path(__file__).parent / "QUOI.txt"
+
+INSULTS_FILE = Path(__file__).parent / "insultes.txt"
+
+
+def load_insult_patterns():
+    patterns = set()
+    try:
+        if INSULTS_FILE.exists():
+            for line in INSULTS_FILE.read_text(encoding="utf-8").splitlines():
+                p = line.strip()
+                if not p:
+                    continue
+                p = p.replace("’", "'").lower()
+                patterns.add(p)
+    except Exception:
+        pass
+    return patterns
+
+
+INSULT_PATTERNS = load_insult_patterns()
+
+
+def load_quoi_patterns():
+    patterns = set()
+    try:
+        if QUOI_FILE.exists():
+            for line in QUOI_FILE.read_text(encoding="utf-8").splitlines():
+                p = line.strip()
+                if not p:
+                    continue
+                # normalize fancy apostrophes and lowercase
+                p = p.replace("’", "'").lower()
+                patterns.add(p)
+    except Exception:
+        pass
+    return patterns
+
+
+QUI_PATTERNS = load_quoi_patterns()
 
 
 def load_history():
@@ -64,20 +104,31 @@ async def on_message(message: discord.Message):
     except Exception:
         pass
     
-    # Répondre "FEUR !" si la chaîne 'quoi' apparaît n'importe où dans le message
-    if isinstance(message.content, str) and 'quoi' in message.content.lower():
-        channel = message.channel
-        await channel.send("FEUR !")
+    # Répondre feur si une proposition de QUOI.txt apparaît
+    try:
+        #QUI_PATTERNS = pouvoir definir une regle externe
+        if isinstance(message.content, str) and QUI_PATTERNS:
+            msg_norm = message.content.replace("’", "'").lower()
+            for pat in QUI_PATTERNS:
+                if pat and pat in msg_norm:
+                    await message.channel.send("FEUR !")
+                    break
+    except Exception:
+        pass
 
-    if message.content.lower() == 'ntm':
-        channel = message.channel
-        author = message.author
-        await author.send("Tu veux je bz ta mère ?")
-
-    if message.content.lower() == 'au revoir':
-        good_bye_channel = bot.get_channel(1442268548436332765)
-        await good_bye_channel.send(f"Retourne dans ton pays {message.author} !")
-
+    #Détecte toute insulte dans insultes.txt
+    try:
+        if isinstance(message.content, str) and INSULT_PATTERNS:
+            msg_norm = message.content.replace("’", "'").lower()
+            for ins in INSULT_PATTERNS:
+                if ins and ins in msg_norm:
+                    channel = message.channel
+                    author = message.author
+                    await author.send("Tu veux je bz ta mère ?")
+                    await channel.send(f"Tu veux je bz ta mère {author.mention} ?")
+                    break
+    except Exception:
+        pass
     if message.content.lower() == "je t'aime":
         channel = message.channel
         await channel.send("Je t'aime aussi mon bb!")
