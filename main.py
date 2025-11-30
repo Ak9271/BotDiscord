@@ -116,8 +116,8 @@ async def history(ctx):
     channel = ctx.channel
 
     commandes = []
-    async for msg in channel.history(limit=100):
-        if msg.author.id == user.id:
+    async for msg in channel.history(limit=200):
+        if msg.author.id == user.id and isinstance(msg.content, str) and msg.content.startswith(('/', '!')):
             commandes.append(f" - {msg.content}")
     if not commandes:
         await ctx.send("Pas de commandes dans l'historique")
@@ -130,8 +130,8 @@ async def history(ctx):
     await ctx.send(f"Historique des tes commandes:\n{history_commandes}")
 
 
-@bot.command(name="clearhistory")
-async def clearhistory(ctx, confirm: str = None):
+@bot.command(name="clearHistory")
+async def clearHistory(ctx, confirm: str = None):
     
     user = ctx.author
     channel = ctx.channel
@@ -143,7 +143,7 @@ async def clearhistory(ctx, confirm: str = None):
     if confirm != "true":
         await ctx.send(
             "Cette commande supprimera jusqu'aux 100 dernieres commandes que vous avez envoyées. "
-            "Pour confirmer, utilisez `!clearhistory true`."
+            "Pour confirmer, utilisez `!clearHistory true`."
         )
         return
 
@@ -158,8 +158,8 @@ async def clearhistory(ctx, confirm: str = None):
 
     await ctx.send(f"Suppression terminée : {supp_count} message supprimé.")
 
-@bot.command(name="dernierecommande")
-async def dernierecommande(ctx):
+@bot.command(name="lastCommande")
+async def lastCommande(ctx):
     user = ctx.author
     channel = ctx.channel
 
