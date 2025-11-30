@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-from arbre_question import ArbreQuestion, generer_calcul_1, generer_calcul_2, generer_calcul_3, generer_calcul_4, generer_calcul_5, generer_calcul_6
+from arbre_question import ArbreQuestion
 
 TOKEN = os.getenv("TOKEN")
 
@@ -47,20 +47,27 @@ async def on_message(message: discord.Message):
             #Bonne reponse
             etape_actuelle_key = user_state['etape']
             etape_actuelle = ArbreQuestion[etape_actuelle_key]
-            next_step_key = etape_actuelle.get("reussite")
+            # Prefer 'reussite', fall back to 'suivant'
+            next_step_key = etape_actuelle.get("reussite") or etape_actuelle.get("suivant")
+
+            # If the key isn't present exactly in ArbreQuestion, try prefix-matching
+            if next_step_key and next_step_key not in ArbreQuestion:
+                match = next((k for k in ArbreQuestion.keys() if k.startswith(next_step_key)), None)
+                if match:
+                    next_step_key = match
 
             if next_step_key == "conclusion_finale" or next_step_key is None:
                 await message.channel.send(f"{ArbreQuestion['conclusion_finale']['conclusion']}")
                 del etat_user[message.author.id]
             else:
-                #Générer prochaine question
+                # Générer prochaine question
                 next_step = ArbreQuestion[next_step_key]
                 question_text, reponse_attendue = next_step["generateur"]()
 
                 etat_user[message.author.id] = {
                     'etape': next_step_key,
                     'reponse_attendue': reponse_attendue,
-                    'tentatives': next_step["erreur_max"]
+                    'tentatives': next_step.get("erreur_max", 1)
                 }
 
                 msg = f"✅ Bravo ! Question suivante :\n**{question_text}**\n*Tentatives restantes : {next_step['erreur_max']}* ✅"
@@ -71,23 +78,29 @@ async def on_message(message: discord.Message):
             if user_state['tentatives'] <= 0:
                 etape_actuelle_key = user_state['etape']
                 etape_actuelle = ArbreQuestion[etape_actuelle_key]
-                next_step_key = etape_actuelle.get("echec_progression")
+                next_step_key = etape_actuelle.get("echec_progression") or etape_actuelle.get("suivant")
+
+                # Prefix-match if needed
+                if next_step_key and next_step_key not in ArbreQuestion:
+                    match = next((k for k in ArbreQuestion.keys() if k.startswith(next_step_key)), None)
+                    if match:
+                        next_step_key = match
 
                 if next_step_key == "conclusion_finale" or next_step_key is None:
                     await message.channel.send(f"Dommage, c'est perdu ! La réponse était {reponse_attendue}. {ArbreQuestion['echec']['conclusion']}")
                     del etat_user[message.author.id]
                 else:
-                    #Générer prochaine question après échec
+                    # Générer prochaine question après échec
                     next_step = ArbreQuestion[next_step_key]
                     question_text, reponse_attendue = next_step["generateur"]()
 
                     etat_user[message.author.id] = {
                         'etape': next_step_key,
                         'reponse_attendue': reponse_attendue,
-                        'tentatives': next_step["erreur_max"]
+                        'tentatives': next_step.get("erreur_max", 1)
                     }
 
-                    msg = f"❌ Mauvaise réponse. Progression vers une autre question :\n**{question_text}**\n*Tentatives restantes : {next_step['erreur_max']}* ❌"
+                    msg = f"❌ Mauvaise réponse. Progression vers une autre question :\n**{question_text}**\n*Tentatives restantes : {next_step.get('erreur_max',1)}* ❌"
                     await message.channel.send(msg)
             else:
                 await message.channel.send(f"❌ Mauvaise réponse. Il te reste {user_state['tentatives']} tentatives. ❌")

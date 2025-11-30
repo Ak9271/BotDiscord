@@ -9,28 +9,28 @@ def generer_calcul_1():
     reponse = a + b * c
     return question, reponse
 
-def generer_calcul_2():
+def generer_calcul_2_faux():
     a = random.randint(1, 1000)
     b = random.randint(1, 10)
     question = f"2. Calculer : {a} / {b} (arrondir à l'entier le plus proche)"
     reponse = round(a / b)
     return question, reponse
 
-def generer_calcul_2_Final():
+def generer_calcul_3_2faux():
     pourcentage = random.choice([10,15,20,25,30])
     nombre = random.choice([50,100,150,200,250,500])
     question = f"3. Calculer : {pourcentage}% de {nombre}, (Noter la decimale meme si 0)"
     reponse = (pourcentage / 100) * nombre
     return question, reponse
 
-def generer_calcul_3():
+def generer_calcul_2_vrai():
     pourcentage = random.choice([10,15,20,25,30])
     nombre = random.choice([50,100,150,200,250,500])
     question = f"2. Calculer : {pourcentage}% de {nombre}, (Noter la decimale meme si 0)"
     reponse = (pourcentage / 100) * nombre
     return question, reponse
 
-def generer_calcul_4():
+def generer_calcul_3_1faux():
     a = random.randint(1,9)
     puissance = random.randint(1,5)
     b = random.randint(1,2000)
@@ -38,7 +38,7 @@ def generer_calcul_4():
     reponse = (a ** puissance) - b
     return question, reponse
 
-def generer_calcul_5():
+def generer_calcul_3_2vrai():
     x = random.randint(5, 10)
     a = random.randint(2, 4)
     b = random.randint(1, 5)
@@ -47,7 +47,7 @@ def generer_calcul_5():
     reponse = x
     return question, reponse
 
-def generer_calcul_6():
+def generer_calcul_3_1vrai():
     r1 = random.randint(1,9)
     r2 = r1 + random.randint(1,5)
     somme = r1 + r2
@@ -60,39 +60,39 @@ def generer_calcul_6():
 ArbreQuestion = {
     "start": {
         "generateur": generer_calcul_1,
-        "reussite": "calcul_3",
-        "echec_progression": "calcul_2",
+        "reussite": "calcul_2_vrai",
+        "echec_progression": "calcul_2_faux",
         "erreur_max": 2
     },
-    "calcul_2": {
-        "generateur": generer_calcul_2,
-        "reussite": "calcul_5",
-        "echec_progression": "calcul_2_Final",
+    "calcul_2_faux": {
+        "generateur": generer_calcul_2_faux,
+        "reussite": "calcul_3_2vrai",
+        "echec_progression": "calcul_3_2faux",
         "erreur_max": 2
     },
-    "calcul_2_Final": {
-        "generateur": generer_calcul_2_Final,
+    "calcul_3_2faux": {
+        "generateur": generer_calcul_3_2faux,
         "suivant": "conclusion_finale",
         "erreur_max": 2
     },
-    "calcul_3": {
-        "generateur": generer_calcul_3,
-        "suivant": "calcul_6",
-        "echec_progression": "calcul_4",
+    "calcul_2_vrai": {
+        "generateur": generer_calcul_2_vrai,
+        "suivant": "calcul_3_1vrai",
+        "echec_progression": "calcul_3_1faux",
         "erreur_max": 2
     },
-    "calcul_4": {
-        "generateur": generer_calcul_4,
-        "suivant": "conclusion_finale",
-        "erreur_max": 3
-    },
-    "calcul_5": {
-        "generateur": generer_calcul_5,
+    "calcul_3_1faux": {
+        "generateur": generer_calcul_3_1faux,
         "suivant": "conclusion_finale",
         "erreur_max": 3
     },
-    "calcul_6": {
-        "generateur": generer_calcul_6,
+    "calcul_3_2vrai": {
+        "generateur": generer_calcul_3_2vrai,
+        "suivant": "conclusion_finale",
+        "erreur_max": 3
+    },
+    "calcul_3_1vrai": {
+        "generateur": generer_calcul_3_1vrai,
         "suivant": "conclusion_finale",
         "erreur_max": 3
     },
