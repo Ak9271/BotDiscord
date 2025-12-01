@@ -22,7 +22,7 @@ Ceci est un bot Discord développé en Python utilisant la librairie `discord.py
 | :-------------------- | :------------------- | :-------------------------------------------------- |
 | **`.env`**            | **Configuration**    | Doit contenir `TOKEN="VOTRE_TOKEN_DISCORD_ICI"`.    |
 | **`insultes.txt`**    | **Modération**       | Liste des mots/phrases à détecter pour le mute.     |
-| **`QUOI.txt`**        | **Troll**              | Liste des mots/phrases qui déclenchent le "FEUR !". |
+| **`QUOI.txt`**        | **Troll**            | Liste des mots/phrases qui déclenchent le "FEUR !". |
 | **`cours-maths.pdf`** | **Quiz**             | Fichier PDF envoyé en cas d'échec au quiz.          |
 
 ## ⚙️ Commandes Utilisateur
@@ -33,6 +33,7 @@ Ceci est un bot Discord développé en Python utilisant la librairie `discord.py
 | `!history`      |Affiche l'historique de vos commandes passées.                                               | 
 | `!lastCommande` |Affiche l'avant-dernière commande tapée dans l'historique.                                   |
 | `!clearHistory` |Supprime l'historique de l'utilisateur. **Nécessite `!clearHistory true` pour confirmation.**|
+| `!commande`     |Affiche toutes les commandes disponibles                                                     |
 
 ## Lancement du Bot
     Le bot n'étant pas hébergé sur un serveur, il faut donc d'abord executer la commande:
