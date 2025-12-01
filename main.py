@@ -31,9 +31,7 @@ def load_insult_patterns():
         pass
     return patterns
 
-
 INSULT_PATTERNS = load_insult_patterns()
-
 
 def load_quoi_patterns():
     patterns = set()
@@ -43,7 +41,6 @@ def load_quoi_patterns():
                 p = line.strip()
                 if not p:
                     continue
-                # normalize fancy apostrophes and lowercase
                 p = p.replace("’", "'").lower()
                 patterns.add(p)
     except Exception:
@@ -67,8 +64,7 @@ def save_history(data: dict):
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f"Failed to save history: {e}")
-
+        print(f"Sauvegarde dans l'historique échouée: {e}")
 
 def add_history_entry(user_id: int, content: str, channel_id: int):
     data = load_history()
@@ -87,8 +83,7 @@ def add_history_entry(user_id: int, content: str, channel_id: int):
 
 @bot.event
 async def on_ready(): 
-    print(" ")
-    print("Bot allumé ")
+    print("\nBot allumé ")
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -101,9 +96,9 @@ async def on_message(message: discord.Message):
     except Exception:
         pass
     
-    # Répondre feur si une proposition de QUOI.txt apparaît
+    # Répond feur si une proposition de QUOI.txt apparaît
     try:
-        #QUI_PATTERNS = pouvoir definir une regle externe
+        #QUI_PATTERNS = pouvoir definir une regle externe 
         if isinstance(message.content, str) and QUI_PATTERNS:
             msg_norm = message.content.replace("’", "'").lower()
             for pat in QUI_PATTERNS:
@@ -121,31 +116,30 @@ async def on_message(message: discord.Message):
                 if ins and ins in msg_norm:
                     channel = message.channel
                     author = message.author
-                    print(f"[MOD] Insulte détectée de {author} ({author.id}) dans {getattr(channel, 'id', 'unknown')}: '{message.content}'")
-
+                    print(f"[MODERATION] Insulte détectée de {author} ({author.id}) dans {getattr(channel, 'id', 'unknown')}: '{message.content}'")
                     try:
-                        await channel.send(f"Insulte détectée de {author.mention}. Tentative de sanction en cours...")
+                        await channel.send(f"Insulte détectée de {author.mention}. Tentative de sanction...")
                     except Exception:
                         pass
 
                     # mute message de 1 minute
-                    mute_success = False
+                    mute = False
                     try:
                         timeout_fn = getattr(author, 'timeout', None)
                         if callable(timeout_fn):
                             try:
-                                await author.timeout(timedelta(minutes=1), reason="Insulte détectée")
-                                mute_success = True
+                                await author.timeout(timedelta(minutes=1), reason="Insulte")
+                                mute = True
                             except TypeError:
                                 try:
-                                    await author.timeout(datetime.utcnow() + timedelta(minutes=1), reason="Insulte détectée")
-                                    mute_success = True
+                                    await author.timeout(datetime.utcnow() + timedelta(minutes=1), reason="Insulte")
+                                    mute = True
                                 except Exception:
                                     traceback.print_exc()
                         else:
                             try:
                                 await author.edit(communication_disabled_until=datetime.utcnow() + timedelta(minutes=1))
-                                mute_success = True
+                                mute = True
                             except Exception:
                                 traceback.print_exc()
                     except Exception:
@@ -153,10 +147,10 @@ async def on_message(message: discord.Message):
 
                     # envoyer confirmation en salon selon le résultat
                     try:
-                        if mute_success:
-                            await channel.send(f"{author.mention} a été mute pour 1 minute pour insulte.")
+                        if mute:
+                            await channel.send(f"{author.mention} a été mute pendant 1 minute pour insulte.")
                         else:
-                            await channel.send(f"Impossible d'appliquer le mute à {author.mention} (vérifier permis du bot).")
+                            await channel.send(f"Impossible d'appliquer le mute à {author.mention} (vérif perms du bot).")
                     except Exception:
                         pass
 
@@ -164,13 +158,14 @@ async def on_message(message: discord.Message):
                     try:
                         await channel.send(f"Attention les insultes {author.mention} ?")
                     except Exception:
-                        print(f"[MOD] Impossible d'envoyer un DM à {author} ({author.id})")
+                        print(f"[MODERATION] Impossible d'envoyer un DM à {author} ({author.id})")
                     break
     except Exception:
         traceback.print_exc()
+
     if message.content.lower() == "je t'aime":
         channel = message.channel
-        await channel.send("Je t'aime aussi mon bb!")
+        await channel.send("Moi aussi je t'aime!")
     
     # Gestion des réposes
     if message.author.id in etat_user and not message.content.startswith('!'):
@@ -182,28 +177,28 @@ async def on_message(message: discord.Message):
             #Bonne reponse
             etape_actuelle_key = user_state['etape']
             etape_actuelle = ArbreQuestion[etape_actuelle_key]
-            next_step_key = etape_actuelle.get("reussite") or etape_actuelle.get("suivant")
+            cle_etape_suivante = etape_actuelle.get("reussite") or etape_actuelle.get("suivant")
 
-            if next_step_key and next_step_key not in ArbreQuestion:
-                match = next((k for k in ArbreQuestion.keys() if k.startswith(next_step_key)), None)
+            if cle_etape_suivante and cle_etape_suivante not in ArbreQuestion:
+                match = next((k for k in ArbreQuestion.keys() if k.startswith(cle_etape_suivante)), None)
                 if match:
-                    next_step_key = match
+                    cle_etape_suivante = match
 
-            if next_step_key == "conclusion_finale" or next_step_key is None:
+            if cle_etape_suivante == "conclusion_finale" or cle_etape_suivante is None:
                 await message.channel.send(f"{ArbreQuestion['conclusion_finale']['conclusion']}")
                 del etat_user[message.author.id]
             else:
                 #Générer prochaine question
-                next_step = ArbreQuestion[next_step_key]
+                next_step = ArbreQuestion[cle_etape_suivante]
                 question_text, reponse_attendue = next_step["generateur"]()
 
                 etat_user[message.author.id] = {
-                    'etape': next_step_key,
+                    'etape': cle_etape_suivante,
                     'reponse_attendue': reponse_attendue,
                     'tentatives': next_step.get("erreur_max", 1)
                 }
 
-                msg = f"✅ Bravo ! Question suivante :\n**{question_text}**\n*Tentatives restantes : {next_step['erreur_max']}* ✅"
+                msg = f"✅ Bravo ! ✅\nQuestion suivante :\n**{question_text}**\n*Tentatives restantes : {next_step['erreur_max']}*"
                 await message.channel.send(msg)
         else:
             #Mauvaise reponse
@@ -211,15 +206,15 @@ async def on_message(message: discord.Message):
             if user_state['tentatives'] <= 0:
                 etape_actuelle_key = user_state['etape']
                 etape_actuelle = ArbreQuestion[etape_actuelle_key]
-                next_step_key = etape_actuelle.get("echec_progression") or etape_actuelle.get("suivant")
+                cle_etape_suivante = etape_actuelle.get("echec_progression") or etape_actuelle.get("suivant")
 
-                if next_step_key and next_step_key not in ArbreQuestion:
-                    match = next((k for k in ArbreQuestion.keys() if k.startswith(next_step_key)), None)
+                if cle_etape_suivante and cle_etape_suivante not in ArbreQuestion:
+                    match = next((k for k in ArbreQuestion.keys() if k.startswith(cle_etape_suivante)), None)
                     if match:
-                        next_step_key = match
+                        cle_etape_suivante = match
 
-                if next_step_key == "conclusion_finale" or next_step_key is None:
-                    await message.channel.send(f"C'est perdu ! La réponse était {reponse_attendue}. \n {ArbreQuestion['echec']['conclusion']}")
+                if cle_etape_suivante == "conclusion_finale" or cle_etape_suivante is None:
+                    await message.channel.send(f"C'est perdu ! \nLa réponse était {reponse_attendue}. \n {ArbreQuestion['echec']['conclusion']}")
                     try:
                         if COURS_FILE.exists():
                             try:
@@ -232,7 +227,7 @@ async def on_message(message: discord.Message):
                                 pass
                         else:
                             try:
-                                await message.channel.send("Le fichier `cours-maths.pdf` est introuvable")
+                                await message.channel.send("Fichier `cours-maths.pdf` est introuvable")
                             except Exception:
                                 pass
                     except Exception:
@@ -240,19 +235,19 @@ async def on_message(message: discord.Message):
                     del etat_user[message.author.id]
                 else:
                     #Générer prochaine question après échec
-                    next_step = ArbreQuestion[next_step_key]
+                    next_step = ArbreQuestion[cle_etape_suivante]
                     question_text, reponse_attendue = next_step["generateur"]()
 
                     etat_user[message.author.id] = {
-                        'etape': next_step_key,
+                        'etape': cle_etape_suivante,
                         'reponse_attendue': reponse_attendue,
                         'tentatives': next_step.get("erreur_max", 1)
                     }
 
-                    msg = f"❌ Mauvaise réponse. Progression vers une autre question :\n**{question_text}**\n*Tentatives restantes : {next_step.get('erreur_max',1)}* ❌"
+                    msg = f"❌ Mauvaise réponse ❌ \n Progression vers une autre question :\n**{question_text}**\n*Tentatives restantes : {next_step.get('erreur_max',1)}*"
                     await message.channel.send(msg)
             else:
-                await message.channel.send(f"❌ Mauvaise réponse. Il te reste {user_state['tentatives']} tentatives. ❌")
+                await message.channel.send(f"❌ Mauvaise réponse ❌ \n Il te reste {user_state['tentatives']} tentatives.")
         return
     #Permettre commandes de base avec "!"
     await bot.process_commands(message)
@@ -274,14 +269,14 @@ async def history(ctx):
         return
 
     # afficher du + ancien au + récent
-    to_show = list(reversed(entrees))
+    aMontrer = list(reversed(entrees))
     # afficher aussi salon pour contexte
-    lines = [f"{i+1}. {item['content']} (salon: {item.get('channel_id')}) - {item['timestamp']}" for i, item in enumerate(to_show)]
+    lines = [f"{i+1}. {item['content']} (salon: {item.get('channel_id')}) - {item['timestamp']}" for i, item in enumerate(aMontrer)]
     history_commandes = "\n".join(lines)
 
     if len(history_commandes) > 2000:
         history_commandes = history_commandes[:1995] + "\n..."
-    await ctx.send(f"Historique des tes commandes dans ce salon:\n{history_commandes}")
+    await ctx.send(f"Historique de commandes dans ce salon:\n{history_commandes}")
 
 
 @bot.command(name="clearHistory")
@@ -290,7 +285,7 @@ async def clearHistory(ctx, confirm: str = None):
     if confirm != "true":
         await ctx.send(
             "Cette commande supprimera tout l'historique local pour l'utilisateur. "
-            "Pour confirmer, utilisez `!clearHistory true`."
+            "Utiliser `!clearHistory true` pour confirmer."
         )
         return
 
@@ -303,10 +298,10 @@ async def clearHistory(ctx, confirm: str = None):
         save_history(data)
     except Exception as e:
         print(f"Erreur mise à jour historique local: {e}")
-        await ctx.send("Une erreur est survenue lors de la suppression de l'historique local.")
+        await ctx.send("Erreur lors de la suppression de l'historique.")
         return
 
-    await ctx.send(f"Suppression terminée : {removed} entrée(s) d'historique supprimée(s) du fichier local pour votre utilisateur.")
+    await ctx.send(f"Suppression terminée : {removed}historique supprimée l'utilisateur.")
 
 @bot.command(name="lastCommande")
 async def lastCommande(ctx):
@@ -326,7 +321,7 @@ async def lastCommande(ctx):
     if len(filtered) >= 2:
         await ctx.send(f"Votre avant-dernière commande était : {filtered[1]}")
     elif len(filtered) == 1:
-        await ctx.send("Il n'y a qu'une seule commande dans l'historique.")
+        await ctx.send("Il y a qu'une seule commande dans l'historique.")
     else:
         await ctx.send("Aucune commande trouvée dans l'historique.")
 
@@ -338,7 +333,7 @@ async def quiz(ctx):
     etape1 = ArbreQuestion[etape1_key]
 
     if user_id in etat_user:
-        await ctx.send("Tu fais déjà un quiz .")
+        await ctx.send("Tu fais déjà un quiz")
         return
 
     question_text, reponse_attendue = etape1["generateur"]()
