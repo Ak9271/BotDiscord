@@ -50,9 +50,7 @@ def load_quoi_patterns():
         pass
     return patterns
 
-
 QUI_PATTERNS = load_quoi_patterns()
-
 
 def load_history():
     if not HISTORY_FILE.exists():
@@ -78,7 +76,7 @@ def add_history_entry(user_id: int, content: str, channel_id: int):
     entry = {
         "content": content,
         "channel_id": str(channel_id),
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.utcnow().isoformat()
     }
     data.setdefault(key, [])
     data[key].insert(0, entry)
@@ -91,7 +89,6 @@ def add_history_entry(user_id: int, content: str, channel_id: int):
 async def on_ready(): 
     print(" ")
     print("Bot allumé ")
-    #Commandes de base avec préfixe "!"
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -222,7 +219,7 @@ async def on_message(message: discord.Message):
                         next_step_key = match
 
                 if next_step_key == "conclusion_finale" or next_step_key is None:
-                    await message.channel.send(f"Dommage, c'est perdu ! La réponse était {reponse_attendue}. \n {ArbreQuestion['echec']['conclusion']}")
+                    await message.channel.send(f"C'est perdu ! La réponse était {reponse_attendue}. \n {ArbreQuestion['echec']['conclusion']}")
                     try:
                         if COURS_FILE.exists():
                             try:
@@ -256,11 +253,15 @@ async def on_message(message: discord.Message):
                     await message.channel.send(msg)
             else:
                 await message.channel.send(f"❌ Mauvaise réponse. Il te reste {user_state['tentatives']} tentatives. ❌")
-
         return
-
     #Permettre commandes de base avec "!"
     await bot.process_commands(message)
+
+@bot.command(name="commande", description="Affiche toutes les commandes disponibles")
+async def commande(ctx):
+    commandes = [cmd.name for cmd in bot.commands]
+    commandes_list = "\n!".join(commandes)
+    await ctx.send(f"Commandes disponibles :\n`!{commandes_list}`")
 
 @bot.command(name="history")
 async def history(ctx):
@@ -288,7 +289,7 @@ async def clearHistory(ctx, confirm: str = None):
     user = ctx.author
     if confirm != "true":
         await ctx.send(
-            "Cette commande supprimera tout l'historique local (fichier JSON) pour votre utilisateur. "
+            "Cette commande supprimera tout l'historique local pour l'utilisateur. "
             "Pour confirmer, utilisez `!clearHistory true`."
         )
         return
