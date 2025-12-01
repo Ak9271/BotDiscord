@@ -1,5 +1,5 @@
 
-# 🤖 [Nom de votre Bot] : Quiz Adaptatif et Modération
+# 🤖 [BotDiscord] : Quiz Adaptatif et Modération
 
 Ceci est un bot Discord développé en Python utilisant la librairie `discord.py`. Il propose un quiz de calcul mental à difficulté adaptative et intègre des fonctions de modération.
 
